@@ -1,0 +1,24 @@
+# vim: ft=plumed
+
+
+#generated with gmx editconf -f topol.tpr -o reference.pdb, see https://www.plumed.org/doc-v2.7/user-doc/html/_m_o_l_i_n_f_o.html
+MOLINFO MOLTYPE=protein STRUCTURE=chignolin-ref.pdb
+WHOLEMOLECULES ENTITY0=1-166
+
+# Select Calpha
+PROTEIN: GROUP ATOMS=1-166
+CA: GROUP ATOMS=5,26,47,61,73,88,102,109,123,147
+
+rmsd_ca: RMSD REFERENCE=chignolin-ca.pdb TYPE=OPTIMAL
+
+
+metad: METAD ...
+  ARG=rmsd_ca
+  PACE=500
+  BIASFACTOR=10
+  HEIGHT=0.6
+  SIGMA=0.02
+...
+
+# PRINT
+PRINT STRIDE=500 ARG=rmsd_ca,metad.* FILE=COLVAR
