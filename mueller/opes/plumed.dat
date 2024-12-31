@@ -1,0 +1,36 @@
+# vim:ft=plumed
+UNITS NATURAL
+
+p: POSITION ATOM=1
+mueller: CUSTOM ARG=p.x,p.y PERIODIC=NO ...
+  FUNC=0.15*(-200*exp(-(x-1)^2-10*y^2)-100*exp(-x^2-10*(y-0.5)^2)-170*exp(-6.5*(0.5+x)^2+11*(x+0.5)*(y-1.5)-6.5*(y-1.5)^2)+15*exp(0.7*(1+x)^2+0.6*(x+1)*(y-1)+0.7*(y-1)^2)+146.7)
+...
+potential: BIASVALUE ARG=mueller
+lwall: LOWER_WALLS ARG=p.x KAPPA=1000 AT=-1.3
+uwall: UPPER_WALLS ARG=p.x KAPPA=1000 AT=+1.0
+
+
+deepTICA: PYTORCH_MODEL FILE=deeptica_with_koopman_lag1_trans1.ptc ARG=p.x,p.y
+
+dlwall: LOWER_WALLS ARG=deepTICA.node-0 KAPPA=1000 AT=-1.0
+duwall: UPPER_WALLS ARG=deepTICA.node-0 KAPPA=1000 AT=+1.0
+
+#static bias from metad
+metad: METAD ...
+  ARG=p.x
+  PACE=5000000
+  BIASFACTOR=10
+  HEIGHT=0.5
+  SIGMA=0.1
+  RESTART=YES
+  FILE=HILLS_trans1 #for forward transition
+  #FILE=HILLS #for back-and-forth transition
+...
+
+
+opes: OPES_METAD ARG=deepTICA.node-0 PACE=500 BARRIER=20
+
+PRINT FMT=%g STRIDE=10 FILE=COLVAR ARG=p.x,p.y,deepTICA.node-0,opes.*,metad.*
+
+ENDPLUMED
+
